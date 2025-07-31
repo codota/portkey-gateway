@@ -1,4 +1,5 @@
 import { Context } from 'hono';
+import { Agent } from 'undici/types';
 import {
   AZURE_OPEN_AI,
   BEDROCK,
@@ -31,6 +32,7 @@ import { ConditionalRouter } from '../services/conditionalRouter';
 import { RouterError } from '../errors/RouterError';
 import { GatewayError } from '../errors/GatewayError';
 import { HookType } from '../middlewares/hooks/types';
+import { getCustomHttpsAgent } from '../utils/fetch';
 
 /**
  * Constructs the request options for the API call.
@@ -100,11 +102,30 @@ export function constructRequest(
     ...(fn === 'proxy' && proxyHeaders),
   };
 
-  const fetchOptions: RequestInit = {
+  const fetchOptions: RequestInit & { dispatcher?: Agent } = {
     method,
     headers,
     ...(fn === 'uploadFile' && { duplex: 'half' }),
   };
+
+  let tlsOptions = undefined;
+  if (requestHeaders['x-portkey-tls-options']) {
+    try {
+      tlsOptions = JSON.parse(requestHeaders['x-portkey-tls-options']);
+    } catch (e) {
+      console.warn('Failed to parse x-portkey-tls-options:', e);
+    }
+  }
+
+  if (tlsOptions?.ca || tlsOptions?.rejectUnauthorized === false) {
+    // SECURITY NOTE: The following allows to disable TLS certificate validation
+
+    fetchOptions.dispatcher = getCustomHttpsAgent({
+      rejectUnauthorized: tlsOptions?.rejectUnauthorized,
+      ca: tlsOptions?.ca,
+    });
+  }
+
   const contentType = headers['content-type']?.split(';')[0];
   const isGetMethod = method === 'GET';
   const isMultipartFormData = contentType === CONTENT_TYPES.MULTIPART_FORM_DATA;
