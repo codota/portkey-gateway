@@ -1,0 +1,21 @@
+name: Self hosted release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Service version, defaults to bump minor version'
+        required: false
+        default: 'minor'
+jobs:
+  release:
+    uses: codota/tabnine-github-actions/.github/workflows/release-to-self-hosted.yml@master
+    with:
+      service_name: portkey-gateway
+      version: ${{ github.event.inputs.version || 'minor' }}
+      helm_service_key: chat.spec.portkey-gateway
+    secrets:
+      GH_BUILDER_TOKEN: ${{ secrets.GH_BUILDER_TOKEN }}
+      DOCKER_SECRETS: |
+        NODE_AUTH_TOKEN=${{ secrets.CODOTA_BUILDER_PACKAGES_TOKEN }}
+      SELF_HOSTED_GCR_PUSH_KEY: ${{ secrets.SELF_HOSTED_GCR_PUSH_KEY }}
