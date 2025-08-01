@@ -1,6 +1,7 @@
 name: 'Deploy Portkey Gateway to Staging'
 
 on:
+  pull_request:
   push:
     branches:
       - main
