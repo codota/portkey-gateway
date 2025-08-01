@@ -1,0 +1,18 @@
+replicaCount: 2
+
+service:
+  port: 8787
+
+autoscaling:
+  enabled: false
+
+containerPort: 8787
+
+livenessProbe:
+  endpoint: /
+
+readinessProbe:
+  endpoint: /
+
+startupProbe:
+  endpoint: /

@@ -1,0 +1,31 @@
+name: 'Promote Portkey Gateway to Production'
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-portkey-gateway-production:
+    name: Promote Portkey Gateway to Production
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: checkout actions repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.gh_builder_token }}
+          repository: codota/tabnine-github-actions
+          path: ./tabnine-github-actions
+
+      - name: 🚀 Promote to Production
+        uses: ./tabnine-github-actions/promote_to_production
+        with:
+          service_name: portkey-gateway
+          service_account_key: ${{ secrets.GCP_BUILDER_SERVICE_ACCOUNT_KEY }}
+          service_account_key_staging: ${{ secrets.STAGING_GCP_BUILDER_SERVICE_ACCOUNT_KEY }}
+          grafana_api_key: ${{ secrets.GRAFANA_API_KEY_PROD }}
+          helm_values_inline: |
+            env:
+              NODE_ENV: 'production'

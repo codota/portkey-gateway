@@ -1,0 +1,34 @@
+name: 'Deploy Portkey Gateway to Staging'
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy-portkey-gateway-staging:
+    name: Deploy Portkey Gateway to Staging
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: checkout actions repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.gh_builder_token }}
+          repository: codota/tabnine-github-actions
+          path: ./tabnine-github-actions
+
+      - name: 🚀 Deploy to GCP
+        uses: ./tabnine-github-actions/deploy_to_staging
+        with:
+          service_name: portkey-gateway
+          service_account_key: ${{ secrets.STAGING_GCP_BUILDER_SERVICE_ACCOUNT_KEY }}
+          project_id: tabnine-staging
+          grafana_api_key: ${{ secrets.GRAFANA_API_KEY_STAGING }}
+          helm_values_inline: |
+            env:
+              NODE_ENV: staging
